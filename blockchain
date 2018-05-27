@@ -1,0 +1,9 @@
+type bloco = {hash:string, hashanterior:string, dados:string};
+
+fun hash ({hash=h, hashanterior=_, dados=_} : bloco) = h;
+
+fun hashanterior ({hash=_, hashanterior=ha, dados=_} : bloco) = ha;
+
+fun dados ({hash=_, hashanterior=_, dados=d} : bloco) = d;
+
+
