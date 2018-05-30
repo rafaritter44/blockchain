@@ -23,3 +23,28 @@ end;
 
 fun add (b:bloco, []) = [b]
   | add (b:bloco, c:cadeia) = b::c;
+
+fun gerahash (hashanterior, dados) = hashanterior ^ dados;
+
+fun isvalido [] = true
+  | isvalido (c::[]) =
+let
+	val hashanterior = gethashanterior c
+	val hash = gethash c
+	val hashanteriorreal = ""
+	val hashreal = gerahash (hashanteriorreal, getdados c)
+in
+	hashanterior = hashanteriorreal
+	andalso hash = hashreal
+end
+  | isvalido (c::ca::cs) =
+let
+	val hashanterior = gethashanterior c
+	val hash = gethash c
+	val hashanteriorreal = gethash ca
+	val hashreal = gerahash (hashanteriorreal, getdados c)
+in
+	hashanterior = hashanteriorreal
+	andalso hash = hashreal
+	andalso isvalido (ca::cs)
+end;
