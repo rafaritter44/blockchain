@@ -61,3 +61,39 @@ in
 end;
 
 fun tojson c = "[" ^ String.concatWith "," (map blocotojson c) ^ "]";
+
+fun add ([], n) = [n]
+  | add (x::xs, n) = x::add (xs, n);
+
+fun tovalor (#":"::(#" "::(#"\""::xs)), s) = tovalor (xs, "")
+  | tovalor (#"\""::(#","::xs), s) = {valor = s, resto = xs}
+  | tovalor (#"\""::(#"}"::xs), s) = {valor = s, resto = xs}
+  | tovalor (x::xs, s) = tovalor (xs, s ^ Char.toString x)
+  | tovalor ([], s) = {valor = "", resto = []};
+
+fun tobloco (#"{"::xs, ys) = tobloco (xs, [])
+  | tobloco (#"}"::xs, ys) = {bloco = add (ys, #"}"), resto = xs}
+  | tobloco (x::xs, ys) = tobloco (xs, add (ys, x))
+  | tobloco ([], ys) = {bloco = [], resto = []};
+
+fun tocadeia ([], ys) = ys
+  | tocadeia (xs, ys) = if #bloco (tobloco (xs, [])) = [] then ys else
+let
+	val blocoeresto = tobloco (xs, [])
+	val b = #bloco blocoeresto
+	val r = #resto blocoeresto
+	val hasheresto = tovalor (b, "")
+	val hash = #valor hasheresto
+	val hashanterioreresto = tovalor (#resto hasheresto, "")
+	val hashanterior = #valor hashanterioreresto
+	val dadoseresto = tovalor (#resto hashanterioreresto, "")
+	val dados = #valor dadoseresto
+	val bloco = {hash, hashanterior, dados};
+	val cadeia = add (ys, bloco);
+in
+	tocadeia (r, cadeia)
+end;
+
+fun fromjson s = tocadeia (explode s, []);
+	
+	
