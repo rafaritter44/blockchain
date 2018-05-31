@@ -48,3 +48,16 @@ in
 	andalso hash = hashreal
 	andalso isvalido (ca::cs)
 end;
+
+fun blocotojson b =
+let
+	val hash = gethash b
+	val hashanterior = gethashanterior b
+	val dados = getdados b
+in
+	"{\"hash\": \"" ^ hash ^
+	"\", \"hashanterior\": \"" ^ hashanterior ^
+	"\", \"dados\": \"" ^ dados ^ "\"}"
+end;
+
+fun tojson c = "[" ^ String.concatWith "," (map blocotojson c) ^ "]";
