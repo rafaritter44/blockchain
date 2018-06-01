@@ -24,7 +24,7 @@ end;
 fun add (b:bloco, []) = [b]
   | add (b:bloco, c:cadeia) = b::c;
 
-fun gerahash (hashanterior, dados) = hashanterior ^ dados;
+fun gerahash (hashanterior, dados, nonce) = hashanterior ^ dados;
 
 fun isvalido [] = true
   | isvalido (c::[]) =
@@ -95,5 +95,47 @@ in
 end;
 
 fun fromjson s = tocadeia (explode s, []);
-	
+
+(* fun escrever (nomearquivo, conteudo) =
+let
+	val arquivo = (TextIO.openOut nomearquivo
+	handle _
+	=> (TextIO.output (TextIO.stdErr,nomearquivo ^ " not found. This sucks.\n");
+	OS.Process.exit OS.Process.failure))
+	val _ = TextIO.output (arquivo, conteudo)
+in
+	TextIO.closeOut arquivo
+end;
+
+fun ler nomearquivo =
+let
+	val arquivo = (TextIO.openIn nomearquivo
+	handle _
+	=> (TextIO.output (TextIO.stdErr,nomearquivo ^ " not found. This sucks.\n");
+	OS.Process.exit OS.Process.failure))
+	val conteudo = TextIO.inputAll arquivo
+	val _ = TextIO.closeIn arquivo
+in
+	conteudo
+end; *)
+
+fun dificuldade 0 = ""
+  | dificuldade n = "0" ^ prefixo (n - 1);
+
+fun mineraraux (dificuldade, hashanterior, dados, nonce) =
+let
+	val hash = gerahash (hashanterior, dados, nonce)
+in
+	if dificuldade = substring (hash, 0, size dificuldade)
+		then hash
+	else
+		mineraraux (dificuldade, hashanterior, dados, nonce + 1)
+end;
+
+fun minerar (dif, hashanterior, dados) =
+let
+	val dificuldade = dificuldade dif;
+in
+	mineraraux (dificuldade, hashanterior, dados, 0)
+end;
 	
