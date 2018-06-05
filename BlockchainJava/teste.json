@@ -1,0 +1,20 @@
+[
+  {
+    "hash": "0055150fe87162d97b7074260c22ec4e57ee6d4f",
+    "previousHash": "0",
+    "data": "Hi im the first block",
+    "nonce": 147
+  },
+  {
+    "hash": "00d332e16f7560268b9e1da3c4698fb70fb85b79",
+    "previousHash": "0055150fe87162d97b7074260c22ec4e57ee6d4f",
+    "data": "Yo im the second block",
+    "nonce": 199
+  },
+  {
+    "hash": "005cdb579878e98ea66ceff2d1c70ef50046b12b",
+    "previousHash": "00d332e16f7560268b9e1da3c4698fb70fb85b79",
+    "data": "Hey im the third block",
+    "nonce": 189
+  }
+]

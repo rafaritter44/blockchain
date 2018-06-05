@@ -1,52 +1,56 @@
-type bloco = {hash:string, hashanterior:string, dados:string};
+type bloco = {hash:string, hashanterior:string, dados:string, nonce:int};
 
-fun gethash ({hash=h, hashanterior=_, dados=_} : bloco) = h;
+fun gethash ({hash=h, hashanterior=_, dados=_, nonce=_} : bloco) = h;
 
-fun gethashanterior ({hash=_, hashanterior=ha, dados=_} : bloco) = ha;
+fun gethashanterior ({hash=_, hashanterior=ha, dados=_, nonce=_} : bloco) = ha;
 
-fun getdados ({hash=_, hashanterior=_, dados=d} : bloco) = d;
+fun getdados ({hash=_, hashanterior=_, dados=d, nonce=_} : bloco) = d;
+
+fun getnonce ({hash=_, hashanterior=_, dados=_, nonce=n} : bloco) = n;
 
 type cadeia = bloco list;
 
-fun criabloco (hash:string, dados:string, []) = 
+fun criabloco (hash, dados, [], nonce) = 
 let
 	val hashanterior = ""
 in
-	{hash, hashanterior, dados}:bloco
+	{hash, hashanterior, dados, nonce}:bloco
 end
-  | criabloco (hash:string, dados:string, c::cs:cadeia) = 
+  | criabloco (hash, dados, c::cs:cadeia, nonce) = 
 let
 	val hashanterior = gethash c
 in
-	{hash, hashanterior, dados}:bloco
+	{hash, hashanterior, dados, nonce}:bloco
 end;
 
-fun addbloco (b:bloco, []) = [b]
-  | addbloco (b:bloco, c:cadeia) = b::c;
+fun addbloco (b:bloco, []) = [b]:cadeia
+  | addbloco (b:bloco, c:cadeia) = b::c:cadeia;
 
 fun gerahash (hashanterior, dados, nonce) = sha1 (hashanterior ^ Int.toString nonce ^ dados);
 
-fun isvalido [] = true
-  | isvalido (c::[]) =
+fun isvalido ([], dificuldade) = true
+  | isvalido (c::[], dificuldade) =
 let
 	val hashanterior = gethashanterior c
 	val hash = gethash c
 	val hashanteriorreal = ""
-	val hashreal = gerahash (hashanteriorreal, getdados c)
+	val hashreal = gerahash (hashanteriorreal, getdados c, getnonce c)
 in
 	hashanterior = hashanteriorreal
 	andalso hash = hashreal
+	andalso (String.isPrefix (zeros dificuldade) hash)
 end
-  | isvalido (c::ca::cs) =
+  | isvalido (c::ca::cs, dificuldade) =
 let
 	val hashanterior = gethashanterior c
 	val hash = gethash c
 	val hashanteriorreal = gethash ca
-	val hashreal = gerahash (hashanteriorreal, getdados c)
+	val hashreal = gerahash (hashanteriorreal, getdados c, getnonce c)
 in
 	hashanterior = hashanteriorreal
 	andalso hash = hashreal
-	andalso isvalido (ca::cs)
+	andalso (String.isPrefix (zeros dificuldade) hash)
+	andalso isvalido (ca::cs, dificuldade)
 end;
 
 fun blocotojson b =
@@ -54,10 +58,12 @@ let
 	val hash = gethash b
 	val hashanterior = gethashanterior b
 	val dados = getdados b
+	val nonce = getnonce b
 in
 	"{\"hash\": \"" ^ hash ^
 	"\", \"hashanterior\": \"" ^ hashanterior ^
-	"\", \"dados\": \"" ^ dados ^ "\"}"
+	"\", \"dados\": \"" ^ dados ^ "\"" ^
+	"\", \"nonce\": " ^ Int.toString nonce ^ "}"
 end;
 
 fun tojson c = "[" ^ String.concatWith "," (map blocotojson c) ^ "]";
@@ -88,7 +94,9 @@ let
 	val hashanterior = #valor hashanterioreresto
 	val dadoseresto = tovalor (#resto hashanterioreresto, "")
 	val dados = #valor dadoseresto
-	val bloco = {hash, hashanterior, dados};
+	val nonceeresto = tovalor (#resto dadoseresto, "")
+	val nonce = valOf (Int.fromString (#valor nonceeresto))
+	val bloco = {hash, hashanterior, dados, nonce};
 	val cadeia = add (ys, bloco);
 in
 	tocadeia (r, cadeia)
@@ -96,28 +104,42 @@ end;
 
 fun fromjson s = tocadeia (explode s, []);
 
-(* fun escrever (nomearquivo, conteudo) =
+fun escrever (nomearquivo, conteudo) =
 let
-	val arquivo = (TextIO.openOut nomearquivo
-	handle _
-	=> (TextIO.output (TextIO.stdErr,nomearquivo ^ " not found. This sucks.\n");
-	OS.Process.exit OS.Process.failure))
+	val arquivo = TextIO.openOut nomearquivo
 	val _ = TextIO.output (arquivo, conteudo)
 in
 	TextIO.closeOut arquivo
 end;
 
+fun getultimobloco [] = {hash="",hashanterior="",dados="",nonce=0}
+  | getultimobloco (b::bs) = b;
+
+(*
+
+fun main entrada =
+let
+	val dificuldade = 2
+	val cadeia1 = fromjson (ler entrada)
+	val valida = isvalido (cadeia1, dificuldade)
+	val novosdados = "Dados do novo bloco"
+	val hashanterior = gethash (getultimobloco cadeia1)
+	val novohash = minerar (dificuldade, hashanterior, novosdados)
+	val novobloco = criabloco 
+in
+	0
+end;
+
+*)
+
 fun ler nomearquivo =
 let
-	val arquivo = (TextIO.openIn nomearquivo
-	handle _
-	=> (TextIO.output (TextIO.stdErr,nomearquivo ^ " not found. This sucks.\n");
-	OS.Process.exit OS.Process.failure))
+	val arquivo = TextIO.openIn nomearquivo
 	val conteudo = TextIO.inputAll arquivo
 	val _ = TextIO.closeIn arquivo
 in
 	conteudo
-end; *)
+end;
 
 fun zeros n =
 let
@@ -436,12 +458,12 @@ fun tohexatable [#"0",#"0",#"0",#"0"] = #"0"
   | tohexatable [#"0",#"1",#"1",#"1"] = #"7"
   | tohexatable [#"1",#"0",#"0",#"0"] = #"8"
   | tohexatable [#"1",#"0",#"0",#"1"] = #"9"
-  | tohexatable [#"1",#"0",#"1",#"0"] = #"A"
-  | tohexatable [#"1",#"0",#"1",#"1"] = #"B"
-  | tohexatable [#"1",#"1",#"0",#"0"] = #"C"
-  | tohexatable [#"1",#"1",#"0",#"1"] = #"D"
-  | tohexatable [#"1",#"1",#"1",#"0"] = #"E"
-  | tohexatable [#"1",#"1",#"1",#"1"] = #"F"
+  | tohexatable [#"1",#"0",#"1",#"0"] = #"a"
+  | tohexatable [#"1",#"0",#"1",#"1"] = #"b"
+  | tohexatable [#"1",#"1",#"0",#"0"] = #"c"
+  | tohexatable [#"1",#"1",#"0",#"1"] = #"d"
+  | tohexatable [#"1",#"1",#"1",#"0"] = #"e"
+  | tohexatable [#"1",#"1",#"1",#"1"] = #"f"
   | tohexatable cs = #"?";
 
 fun tohexaaux cs =
