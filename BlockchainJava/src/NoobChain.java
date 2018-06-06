@@ -13,9 +13,18 @@ public class NoobChain {
 	public static int difficulty = 2;
 
 	public static void main(String[] args) {	
-		//add our blocks to the blockchain ArrayList:
 		
-		blockchain.add(new Block("Hi im the first block", "0"));
+		teste1();
+		teste2();
+		teste3();
+		teste4();
+		teste5();
+		
+	}
+	
+	public static void teste1() {
+		
+		blockchain.add(new Block("Hi im the first block", ""));
 		System.out.println("Trying to Mine block 1... ");
 		blockchain.get(0).mineBlock(difficulty);
 		
@@ -33,7 +42,35 @@ public class NoobChain {
 		System.out.println("\nThe block chain: ");
 		System.out.println(blockchainJson);
 		
-		Path path = Paths.get("teste.json");
+		Path path = Paths.get("/Users/rafaritter44/git/blockchain/teste1.json");
+
+		try (PrintWriter writer = new PrintWriter (Files.newBufferedWriter (path, Charset.forName ("utf8")))) {
+			writer.print(blockchainJson);
+		}
+		catch (IOException x) {
+			System.err.format ("Erro de E/S: %s%n", x);
+		}
+		
+	}
+	
+	public static void teste2() {
+		
+		blockchain.add(new Block("Hi im the first block from the 2nd test", ""));
+		System.out.println("Trying to Mine block 1... ");
+		blockchain.get(0).mineBlock(difficulty);
+		
+		blockchain.add(new Block("Yo im the second block from the 2nd test",
+				blockchain.get(blockchain.size()-1).hash));
+		System.out.println("Trying to Mine block 2... ");
+		blockchain.get(1).mineBlock(difficulty);
+		
+		System.out.println("\nBlockchain is Valid: " + isChainValid());
+		
+		String blockchainJson = new GsonBuilder().setPrettyPrinting().create().toJson(blockchain);
+		System.out.println("\nThe block chain: ");
+		System.out.println(blockchainJson);
+		
+		Path path = Paths.get("/Users/rafaritter44/git/blockchain/teste2.json");
 
 		try (PrintWriter writer = new PrintWriter (Files.newBufferedWriter (path, Charset.forName ("utf8")))) {
 			writer.print(blockchainJson);
@@ -42,6 +79,87 @@ public class NoobChain {
 			System.err.format ("Erro de E/S: %s%n", x);
 		}
 	}
+	
+	public static void teste3() {
+		
+		blockchain.add(new Block("Hi im the first block from the 3rd test", ""));
+		System.out.println("Trying to Mine block 1... ");
+		blockchain.get(0).mineBlock(difficulty);
+		
+		System.out.println("\nBlockchain is Valid: " + isChainValid());
+		
+		String blockchainJson = new GsonBuilder().setPrettyPrinting().create().toJson(blockchain);
+		System.out.println("\nThe block chain: ");
+		System.out.println(blockchainJson);
+		
+		Path path = Paths.get("/Users/rafaritter44/git/blockchain/teste3.json");
+
+		try (PrintWriter writer = new PrintWriter (Files.newBufferedWriter (path, Charset.forName ("utf8")))) {
+			writer.print(blockchainJson);
+		}
+		catch (IOException x) {
+			System.err.format ("Erro de E/S: %s%n", x);
+		}
+		
+	}
+	
+	public static void teste4() {
+		
+		System.out.println("\nBlockchain is Valid: " + isChainValid());
+		
+		String blockchainJson = new GsonBuilder().setPrettyPrinting().create().toJson(blockchain);
+		System.out.println("\nThe block chain: ");
+		System.out.println(blockchainJson);
+		
+		Path path = Paths.get("/Users/rafaritter44/git/blockchain/teste4.json");
+
+		try (PrintWriter writer = new PrintWriter (Files.newBufferedWriter (path, Charset.forName ("utf8")))) {
+			writer.print(blockchainJson);
+		}
+		catch (IOException x) {
+			System.err.format ("Erro de E/S: %s%n", x);
+		}
+		
+	}
+	
+	public static void teste5() {
+		
+		blockchain.add(new Block("Hi im the first block from the 5th test", ""));
+		System.out.println("Trying to Mine block 1... ");
+		blockchain.get(0).mineBlock(difficulty);
+		
+		blockchain.add(new Block("Yo im the second block from the 5th test",
+				blockchain.get(blockchain.size()-1).hash));
+		System.out.println("Trying to Mine block 2... ");
+		blockchain.get(1).mineBlock(difficulty);
+		
+		blockchain.add(new Block("Hey im the third block from the 5th test",
+				blockchain.get(blockchain.size()-1).hash));
+		System.out.println("Trying to Mine block 3... ");
+		blockchain.get(2).mineBlock(difficulty);	
+		
+		blockchain.add(new Block("Hey im the forth block from the 5th test",
+				blockchain.get(blockchain.size()-1).hash));
+		System.out.println("Trying to Mine block 4... ");
+		blockchain.get(3).mineBlock(difficulty);
+		
+		System.out.println("\nBlockchain is Valid: " + isChainValid());
+		
+		String blockchainJson = new GsonBuilder().setPrettyPrinting().create().toJson(blockchain);
+		System.out.println("\nThe block chain: ");
+		System.out.println(blockchainJson);
+		
+		Path path = Paths.get("/Users/rafaritter44/git/blockchain/teste5.json");
+
+		try (PrintWriter writer = new PrintWriter (Files.newBufferedWriter (path, Charset.forName ("utf8")))) {
+			writer.print(blockchainJson);
+		}
+		catch (IOException x) {
+			System.err.format ("Erro de E/S: %s%n", x);
+		}
+		
+	}
+	
 	
 	public static Boolean isChainValid() {
 		Block currentBlock; 

@@ -76,7 +76,9 @@ in
 	"\", \"nonce\": " ^ Int.toString nonce ^ "}"
 end;
 
-fun tojson c = "[" ^ String.concatWith "," (map blocotojson c) ^ "]";
+fun tonumero [] = 0
+  | tonumero (#":"::xs) = valOf (Int.fromString (implode xs))
+  | tonumero (x::xs) = tonumero xs;
 
 fun tovalor (#":"::(#" "::(#"\""::xs)), s) = tovalor (xs, "")
   | tovalor (#"\""::(#","::xs), s) = {valor = s, resto = xs}
@@ -101,10 +103,9 @@ let
 	val hashanterior = #valor hashanterioreresto
 	val dadoseresto = tovalor (#resto hashanterioreresto, "")
 	val dados = #valor dadoseresto
-	val nonceeresto = tovalor (#resto dadoseresto, "")
-	val nonce = valOf (Int.fromString (#valor nonceeresto))
-	val bloco = {hash, hashanterior, dados, nonce};
-	val cadeia = add (ys, bloco);
+	val nonce = tonumero (#resto dadoseresto)
+	val bloco = {hash, hashanterior, dados, nonce}
+	val cadeia = add (ys, bloco)
 in
 	tocadeia (r, cadeia)
 end;
@@ -537,7 +538,11 @@ in
 end;
 
 (*
-val _ = main "teste.json";
+val _ = main "teste1.json";
+val _ = main "teste2.json";
+val _ = main "teste3.json";
+val _ = main "teste4.json";
+val _ = main "teste5.json";
 *)
 
 (* -------------------------------------------------------------------------------- *)
