@@ -1,3 +1,26 @@
+
+(* -------------------------------------------------------------------------------- *)
+(* ---------------------------------- BLOCKCHAIN ---------------------------------- *)
+(* -------------------------------------------------------------------------------- *)
+
+(*
+REPOSITORIO: https://github.com/rafaritter44/blockchain
+
+REFERENCIAS:
+* Stack Overflow
+* https://learnxinyminutes.com/docs/standard-ml/
+* https://medium.com/programmers-blockchain/create-simple-blockchain-java-tutorial-from-scratch-6eeed3cb03fa
+* http://sml-family.org/Basis/overview.html
+* https://groups.google.com/forum/#!topic/comp.lang.ml/n5gQDhyW2XY
+* https://stackoverflow.com/questions/7548139/sml-nj-while-loop
+* http://www.metamorphosite.com/one-way-hash-encryption-sha1-data-software
+* https://www.devmedia.com.br/json-tutorial/25275
+*)
+
+(* --------------------------------------------------------------------------------- *)
+(*										     *)
+(* ----------------------------------- ESTRUTURA ----------------------------------- *)
+
 type bloco = {hash:string, hashanterior:string, dados:string, nonce:int};
 
 fun gethash ({hash=h, hashanterior=_, dados=_, nonce=_} : bloco) = h;
@@ -10,47 +33,34 @@ fun getnonce ({hash=_, hashanterior=_, dados=_, nonce=n} : bloco) = n;
 
 type cadeia = bloco list;
 
-fun criabloco (hash, dados, [], nonce) = 
-let
-	val hashanterior = ""
-in
-	{hash, hashanterior, dados, nonce}:bloco
-end
-  | criabloco (hash, dados, c::cs:cadeia, nonce) = 
-let
-	val hashanterior = gethash c
-in
-	{hash, hashanterior, dados, nonce}:bloco
-end;
-
 fun addbloco (b:bloco, []) = [b]:cadeia
   | addbloco (b:bloco, c:cadeia) = b::c:cadeia;
 
-fun gerahash (hashanterior, dados, nonce) = sha1 (hashanterior ^ Int.toString nonce ^ dados);
+fun add ([], n) = [n]
+  | add (x::xs, n) = x::add (xs, n);
 
-fun isvalido ([], dificuldade) = true
-  | isvalido (c::[], dificuldade) =
+fun getultimobloco [] = {hash="",hashanterior="",dados="",nonce=0}
+  | getultimobloco (b::bs) = b;
+
+(* -------------------------------------------------------------------------------- *)
+(*										    *)
+(* ------------------------------------- JSON ------------------------------------- *)
+
+fun escrever (nomearquivo, conteudo) =
 let
-	val hashanterior = gethashanterior c
-	val hash = gethash c
-	val hashanteriorreal = ""
-	val hashreal = gerahash (hashanteriorreal, getdados c, getnonce c)
+	val arquivo = TextIO.openOut nomearquivo
+	val _ = TextIO.output (arquivo, conteudo)
 in
-	hashanterior = hashanteriorreal
-	andalso hash = hashreal
-	andalso (String.isPrefix (zeros dificuldade) hash)
-end
-  | isvalido (c::ca::cs, dificuldade) =
+	TextIO.closeOut arquivo
+end;
+
+fun ler nomearquivo =
 let
-	val hashanterior = gethashanterior c
-	val hash = gethash c
-	val hashanteriorreal = gethash ca
-	val hashreal = gerahash (hashanteriorreal, getdados c, getnonce c)
+	val arquivo = TextIO.openIn nomearquivo
+	val conteudo = TextIO.inputAll arquivo
+	val _ = TextIO.closeIn arquivo
 in
-	hashanterior = hashanteriorreal
-	andalso hash = hashreal
-	andalso (String.isPrefix (zeros dificuldade) hash)
-	andalso isvalido (ca::cs, dificuldade)
+	conteudo
 end;
 
 fun blocotojson b =
@@ -67,9 +77,6 @@ in
 end;
 
 fun tojson c = "[" ^ String.concatWith "," (map blocotojson c) ^ "]";
-
-fun add ([], n) = [n]
-  | add (x::xs, n) = x::add (xs, n);
 
 fun tovalor (#":"::(#" "::(#"\""::xs)), s) = tovalor (xs, "")
   | tovalor (#"\""::(#","::xs), s) = {valor = s, resto = xs}
@@ -104,70 +111,9 @@ end;
 
 fun fromjson s = tocadeia (explode s, []);
 
-fun escrever (nomearquivo, conteudo) =
-let
-	val arquivo = TextIO.openOut nomearquivo
-	val _ = TextIO.output (arquivo, conteudo)
-in
-	TextIO.closeOut arquivo
-end;
-
-fun getultimobloco [] = {hash="",hashanterior="",dados="",nonce=0}
-  | getultimobloco (b::bs) = b;
-
-(*
-
-fun main entrada =
-let
-	val dificuldade = 2
-	val cadeia1 = fromjson (ler entrada)
-	val valida = isvalido (cadeia1, dificuldade)
-	val novosdados = "Dados do novo bloco"
-	val hashanterior = gethash (getultimobloco cadeia1)
-	val novohash = minerar (dificuldade, hashanterior, novosdados)
-	val novobloco = criabloco 
-in
-	0
-end;
-
-*)
-
-fun ler nomearquivo =
-let
-	val arquivo = TextIO.openIn nomearquivo
-	val conteudo = TextIO.inputAll arquivo
-	val _ = TextIO.closeIn arquivo
-in
-	conteudo
-end;
-
-fun zeros n =
-let
-	val counter = ref 0
-	val value = ref ""
-in
-	while (!counter < n) do 
-	(counter := !counter + 1; 
-	value := !value ^ "0");
-	!value
-end;
-
-fun mineraraux (dificuldade, hashanterior, dados, nonce) =
-let
-	val hash = gerahash (hashanterior, dados, nonce)
-in
-	if dificuldade = substring (hash, 0, size dificuldade)
-		then hash
-	else
-		mineraraux (dificuldade, hashanterior, dados, nonce + 1)
-end;
-
-fun minerar (dificuldade, hashanterior, dados) =
-let
-	val dif = zeros dificuldade;
-in
-	mineraraux (dif, hashanterior, dados, 0)
-end;
+(* --------------------------------------------------------------------------------- *)
+(*										     *)
+(* ------------------------------------- SHA-1 ------------------------------------- *)
 
 fun add1rev (#"0"::cs) = #"1"::cs
   | add1rev (#"1"::cs) = #"0"::add1rev cs
@@ -182,11 +128,6 @@ fun add0saux (cs, d) = if length cs <= d
 	then d - length cs
 else
 	add0saux (cs, d + 512);
-
-(* fun zero n = #"0";
-
-fun add0saux2 n = implode (List.tabulate (n, zero))
-handle Size => "Valor invalido"; *)
 
 fun zeroschar n =
 let
@@ -249,10 +190,6 @@ fun dividechunks cs = if length cs > 16
 		sublist (cs, 16)::dividechunks (restlist (cs, 16))
 	else
 		[cs];
-
-(* fun sha1parte1 s = dividechunks
-(chunks (explode (add0s (concat (map implode (map tobinario (map ord (explode s)))) ^ "1")
-	^ implode (tobinario64 (size s))))); *)
 
 fun sha1parte1 s =
 let
@@ -493,3 +430,116 @@ fun sha1parte4 hs = if length hs > 5
 		concat (map implode (map tohexa hs));
 
 fun sha1 s = sha1parte4 (List.concat (map sha1parte3 (map sha1parte2 (sha1parte1 s))));
+
+(* --------------------------------------------------------------------------------- *)
+(*										     *)
+(* --------------------------------- MINERA/VALIDA --------------------------------- *)
+
+fun gerahash (hashanterior, dados, nonce) = sha1 (hashanterior ^ Int.toString nonce ^ dados);
+
+fun zeros n =
+let
+	val counter = ref 0
+	val value = ref ""
+in
+	while (!counter < n) do 
+	(counter := !counter + 1; 
+	value := !value ^ "0");
+	!value
+end;
+
+fun mineraraux (dificuldade, hashanterior, dados, nonce) =
+let
+	val hash = gerahash (hashanterior, dados, nonce)
+in
+	if dificuldade = substring (hash, 0, size dificuldade)
+		then {h=hash, n=nonce}
+	else
+		mineraraux (dificuldade, hashanterior, dados, nonce + 1)
+end;
+
+fun minerar (dificuldade, hashanterior, dados) =
+let
+	val dif = zeros dificuldade;
+in
+	mineraraux (dif, hashanterior, dados, 0)
+end;
+
+fun isvalido ([], dificuldade) = true
+  | isvalido (c::[], dificuldade) =
+let
+	val hashanterior = gethashanterior c
+	val hash = gethash c
+	val hashanteriorreal = ""
+	val hashreal = gerahash (hashanteriorreal, getdados c, getnonce c)
+in
+	hashanterior = hashanteriorreal
+	andalso hash = hashreal
+	andalso (String.isPrefix (zeros dificuldade) hash)
+end
+  | isvalido (c::ca::cs, dificuldade) =
+let
+	val hashanterior = gethashanterior c
+	val hash = gethash c
+	val hashanteriorreal = gethash ca
+	val hashreal = gerahash (hashanteriorreal, getdados c, getnonce c)
+in
+	hashanterior = hashanteriorreal
+	andalso hash = hashreal
+	andalso (String.isPrefix (zeros dificuldade) hash)
+	andalso isvalido (ca::cs, dificuldade)
+end;
+
+fun adulteracadeia [] = []
+  | adulteracadeia (b::[]) =
+let
+	val hash = gethash b
+	val hashanterior = gethashanterior b
+	val dados = "Bloco adulterado!!!"
+	val nonce = getnonce b
+in
+	[{hash, hashanterior, dados, nonce}]
+end
+  | adulteracadeia (b::bs) = b::adulteracadeia bs;
+
+(* -------------------------------------------------------------------------------- *)
+(*										    *)
+(* ------------------------------------- MAIN ------------------------------------- *)
+
+fun main entrada =
+let
+	val dificuldade = 2
+	val cadeiaoriginal = fromjson (ler entrada)
+	val validaoriginal = Bool.toString (isvalido (cadeiaoriginal, dificuldade))
+	val dados = "Dados do novo bloco"
+	val hashanterior = gethash (getultimobloco cadeiaoriginal)
+	val hashenonce = minerar (dificuldade, hashanterior, dados)
+	val hash = #h hashenonce
+	val nonce = #n hashenonce
+	val novobloco = {hash, hashanterior, dados, nonce}:bloco
+	val novacadeia = addbloco (novobloco, cadeiaoriginal)
+	val validanova = Bool.toString (isvalido (novacadeia, dificuldade))
+	val cadeiaadulterada = adulteracadeia novacadeia
+	val invalida = Bool.toString (isvalido (cadeiaadulterada, dificuldade))
+	val file1 = "cadeiaoriginal.json"
+	val file2 = "novacadeia.json"
+	val file3 = "cadeiaadulterada.json"
+	val _ = escrever (file1, tojson cadeiaoriginal)
+	val _ = escrever (file2, tojson novacadeia)
+	val _ = escrever (file3, tojson cadeiaadulterada)
+in
+	print ("Blockchain original validada: " ^ validaoriginal ^
+	"\nNova blockchain validada: " ^ validanova ^
+	"\nBlockchain falsa validada: " ^ invalida ^
+	"\nBlockchain Original:\n" ^ (ler file1) ^
+	"\nNova Blockchain:\n" ^ (ler file2) ^
+	"\nBlockchain Adulterada\n" ^ (ler file3))
+end;
+
+(*
+val _ = main "teste.json";
+*)
+
+(* -------------------------------------------------------------------------------- *)
+(*										    *)
+(* -------------------------------------------------------------------------------- *)
