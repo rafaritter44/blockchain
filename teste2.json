@@ -1,32 +1,14 @@
 [
   {
-    "hash": "0093b7616bb77b5dcd8645102d4d346936ff601e",
-    "previousHash": "",
-    "data": "Hi im the first block",
-    "nonce": 935
-  },
-  {
-    "hash": "0015ce30a7d4a0b6974207d00f2fb180c93305a6",
-    "previousHash": "0093b7616bb77b5dcd8645102d4d346936ff601e",
-    "data": "Yo im the second block",
-    "nonce": 118
-  },
-  {
-    "hash": "0025cfdbe1fd5118a34d6529b0dc115621c0d376",
-    "previousHash": "0015ce30a7d4a0b6974207d00f2fb180c93305a6",
-    "data": "Hey im the third block",
-    "nonce": 37
-  },
-  {
-    "hash": "5ef34f15da19f5c83fd65d606f3ae77636ac0a37",
+    "hash": "00bd40a5cef35c9f1a60920d5abc9a7723b375db",
     "previousHash": "",
     "data": "Hi im the first block from the 2nd test",
-    "nonce": 0
+    "nonce": 28
   },
   {
-    "hash": "a8745da2811d0c12f72c4f4c0106277cc64faa86",
-    "previousHash": "5ef34f15da19f5c83fd65d606f3ae77636ac0a37",
+    "hash": "002877e9d41678e967a7b88f205a6fd064b87c07",
+    "previousHash": "00bd40a5cef35c9f1a60920d5abc9a7723b375db",
     "data": "Yo im the second block from the 2nd test",
-    "nonce": 0
+    "nonce": 124
   }
 ]

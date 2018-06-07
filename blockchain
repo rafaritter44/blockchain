@@ -70,11 +70,13 @@ let
 	val dados = getdados b
 	val nonce = getnonce b
 in
-	"{\"hash\": \"" ^ hash ^
-	"\", \"hashanterior\": \"" ^ hashanterior ^
-	"\", \"dados\": \"" ^ dados ^ "\"" ^
-	"\", \"nonce\": " ^ Int.toString nonce ^ "}"
+	"  {\n    \"hash\": \"" ^ hash ^
+	"\",\n    \"hashanterior\": \"" ^ hashanterior ^
+	"\",\n    \"dados\": \"" ^ dados ^
+	"\",\n    \"nonce\": " ^ Int.toString nonce ^ "\n  }"
 end;
+
+fun tojson c = "[\n" ^ String.concatWith ",\n" (map blocotojson (rev c)) ^ "\n]";
 
 fun tonumero [] = 0
   | tonumero (#":"::xs) = valOf (Int.fromString (implode xs))
@@ -105,7 +107,7 @@ let
 	val dados = #valor dadoseresto
 	val nonce = tonumero (#resto dadoseresto)
 	val bloco = {hash, hashanterior, dados, nonce}
-	val cadeia = add (ys, bloco)
+	val cadeia = addbloco (bloco, ys)
 in
 	tocadeia (r, cadeia)
 end;
@@ -287,28 +289,8 @@ fun nontruncatedtemp (a,f,e,k,palavra) =
 
 fun truncate palavra = restlist (palavra, (length palavra) - 32);
 
-fun sha1parte3 palavras =
+fun sha1parte3 (palavras, h0, h1, h2, h3, h4) =
 let
-	val h0 =
-	[#"0", #"1", #"1", #"0", #"0", #"1", #"1", #"1", #"0", #"1", #"0", #"0",
-	#"0", #"1", #"0", #"1", #"0", #"0", #"1", #"0", #"0", #"0", #"1", #"1",
-	#"0", #"0", #"0", #"0", #"0", #"0", #"0", #"1"]
-	val h1 =
-	[#"1", #"1", #"1", #"0", #"1", #"1", #"1", #"1", #"1", #"1", #"0", #"0",
-	#"1", #"1", #"0", #"1", #"1", #"0", #"1", #"0", #"1", #"0", #"1", #"1",
-	#"1", #"0", #"0", #"0", #"1", #"0", #"0", #"1"]
-	val h2 =
-	[#"1", #"0", #"0", #"1", #"1", #"0", #"0", #"0", #"1", #"0", #"1", #"1",
-	#"1", #"0", #"1", #"0", #"1", #"1", #"0", #"1", #"1", #"1", #"0", #"0",
-	#"1", #"1", #"1", #"1", #"1", #"1", #"1", #"0"]
-	val h3 =
-	[#"0", #"0", #"0", #"1", #"0", #"0", #"0", #"0", #"0", #"0", #"1", #"1",
-	#"0", #"0", #"1", #"0", #"0", #"1", #"0", #"1", #"0", #"1", #"0", #"0",
-	#"0", #"1", #"1", #"1", #"0", #"1", #"1", #"0"]
-	val h4 =
-	[#"1", #"1", #"0", #"0", #"0", #"0", #"1", #"1", #"1", #"1", #"0", #"1",
-	#"0", #"0", #"1", #"0", #"1", #"1", #"1", #"0", #"0", #"0", #"0", #"1",
-	#"1", #"1", #"1", #"1", #"0", #"0", #"0", #"0"]
 	val a = ref h0
 	val b = ref h1
 	val c = ref h2
@@ -380,12 +362,6 @@ in
 	truncate (addition (h4,!e))]
 end;
 
-fun somarchunks ([],[]) = []
-  | somarchunks (x::xs, y::ys) =
-	(truncate (addition (x, y)))::somarchunks (xs,ys)
-  | somarchunks (xs,[]) = xs
-  | somarchunks([],ys) = ys;
-
 fun tohexatable [#"0",#"0",#"0",#"0"] = #"0"
   | tohexatable [#"0",#"0",#"0",#"1"] = #"1"
   | tohexatable [#"0",#"0",#"1",#"0"] = #"2"
@@ -423,14 +399,47 @@ fun tohexaaux2 [] = []
 
 fun tohexa cs = tohexaaux2 (tohexaaux cs);
 
-fun sha1parte4 hs = if length hs > 5
-	then
-		sha1parte4 (somarchunks (somarchunks (sublist (hs, 5),
-		sublist (restlist (hs, 5), 5)), restlist (hs, 5)))
-	else
-		concat (map implode (map tohexa hs));
+fun sha1parte4 (chunk::[], h0, h1, h2, h3, h4) =
+implode (List.concat (map tohexa (sha1parte3 (sha1parte2 chunk, h0, h1, h2, h3, h4))))
+  | sha1parte4 (chunk::chunks, h0, h1, h2, h3, h4) =
+let
+	val hs = sha1parte3 (sha1parte2 chunk, h0, h1, h2, h3, h4)
+	val h0novo = List.nth (hs, 0)
+	val h1novo = List.nth (hs, 1)
+	val h2novo = List.nth (hs, 2)
+	val h3novo = List.nth (hs, 3)
+	val h4novo = List.nth (hs, 4)
+in
+	sha1parte4 (chunks, h0novo, h1novo, h2novo, h3novo, h4novo)
+end
+  | sha1parte4 (chunks, h0, h1, h2, h3, h4) = "";
 
-fun sha1 s = sha1parte4 (List.concat (map sha1parte3 (map sha1parte2 (sha1parte1 s))));
+fun sha1 s =
+let
+	val chunks = sha1parte1 s
+	val h0 =
+	[#"0", #"1", #"1", #"0", #"0", #"1", #"1", #"1", #"0", #"1", #"0", #"0",
+	#"0", #"1", #"0", #"1", #"0", #"0", #"1", #"0", #"0", #"0", #"1", #"1",
+	#"0", #"0", #"0", #"0", #"0", #"0", #"0", #"1"]
+	val h1 =
+	[#"1", #"1", #"1", #"0", #"1", #"1", #"1", #"1", #"1", #"1", #"0", #"0",
+	#"1", #"1", #"0", #"1", #"1", #"0", #"1", #"0", #"1", #"0", #"1", #"1",
+	#"1", #"0", #"0", #"0", #"1", #"0", #"0", #"1"]
+	val h2 =
+	[#"1", #"0", #"0", #"1", #"1", #"0", #"0", #"0", #"1", #"0", #"1", #"1",
+	#"1", #"0", #"1", #"0", #"1", #"1", #"0", #"1", #"1", #"1", #"0", #"0",
+	#"1", #"1", #"1", #"1", #"1", #"1", #"1", #"0"]
+	val h3 =
+	[#"0", #"0", #"0", #"1", #"0", #"0", #"0", #"0", #"0", #"0", #"1", #"1",
+	#"0", #"0", #"1", #"0", #"0", #"1", #"0", #"1", #"0", #"1", #"0", #"0",
+	#"0", #"1", #"1", #"1", #"0", #"1", #"1", #"0"]
+	val h4 =
+	[#"1", #"1", #"0", #"0", #"0", #"0", #"1", #"1", #"1", #"1", #"0", #"1",
+	#"0", #"0", #"1", #"0", #"1", #"1", #"1", #"0", #"0", #"0", #"0", #"1",
+	#"1", #"1", #"1", #"1", #"0", #"0", #"0", #"0"]
+in
+	sha1parte4 (chunks, h0, h1, h2, h3, h4)
+end;
 
 (* --------------------------------------------------------------------------------- *)
 (*										     *)

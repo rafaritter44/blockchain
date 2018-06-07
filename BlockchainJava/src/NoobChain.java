@@ -15,10 +15,10 @@ public class NoobChain {
 	public static void main(String[] args) {	
 		
 		teste1();
-		teste2();
-		teste3();
-		teste4();
-		teste5();
+		//teste2();
+		//teste3();
+		//teste4();
+		//teste5();
 		
 	}
 	

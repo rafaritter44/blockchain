@@ -17,7 +17,7 @@ public class Block {
 	
 	//Calculate new hash based on blocks contents
 	public String calculateHash() {
-		String calculatedhash = StringUtil.applySha256( 
+		String calculatedhash = StringUtil.applySha1( 
 				previousHash +
 				Integer.toString(nonce) + 
 				data 

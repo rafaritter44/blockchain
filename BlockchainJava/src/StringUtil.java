@@ -2,7 +2,7 @@ import java.security.MessageDigest;
 
 public class StringUtil {
 	//Applies Sha1 to a string and returns the result. 
-	public static String applySha256(String input){		
+	public static String applySha1(String input){		
 		try {
 			MessageDigest digest = MessageDigest.getInstance("SHA-1");	        
 			//Applies sha1 to our input, 
